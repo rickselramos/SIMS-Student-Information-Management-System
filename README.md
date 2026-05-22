@@ -1,70 +1,89 @@
-# Getting Started with Create React App
+# Student Information Management System (SIMS)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## System Description
 
-## Available Scripts
+The Student Information Management System (SIMS) is a role-based web-based system designed to manage and organize school records efficiently. It has three user roles: Administrator, Teacher, and Student.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## User Roles
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Administrator
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+* Manage users (teachers and students)
+* Manage subjects, sections, and system data
+* View reports and system overview
 
-### `npm test`
+### Teacher
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+* Manage student records
+* Record and update attendance
+* Manage grades
+* View class schedules
 
-### `npm run build`
+### Student
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+* View personal profile
+* View grades and attendance
+* View class schedule
+* Access announcements and updates
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Default Login Credentials
 
-### `npm run eject`
+### Admin
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Username: admin
+Password: admin123
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Teacher
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Username: teacher1
+Password: teacher123
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Student
 
-## Learn More
+Username: student1
+Password: student123
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## System Requirements
 
-### Code Splitting
+* XAMPP (Apache & MySQL)
+* Node.js
+* npm (Node Package Manager)
+* Web Browser (Chrome recommended)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+---
 
-### Analyzing the Bundle Size
+## Database Setup
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+1. Open phpMyAdmin
+2. Create database: `cabacao_sims`
+3. Import SQL file: `cabacao_sims (2).sql`
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Run Instructions
 
-### Advanced Configuration
+### Frontend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```
+npm install
+npm start
+```
 
-### Deployment
+### Backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+* Start Apache and MySQL in XAMPP
+* Ensure database connection is configured in `database.php`
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Notes
+
+* Make sure XAMPP is running before accessing the system
+* Do not modify core files unless necessary
+* Ensure database is properly imported before login
