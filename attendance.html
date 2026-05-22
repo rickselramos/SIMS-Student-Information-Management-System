@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Monitoring - Cabacao NHS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .stats { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 30px; flex-wrap: wrap; }
+        .stats div { font-size: 14px; }
+        .stats strong { font-size: 20px; display: block; }
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #34495e; color: white; }
+        tr:hover { background: #f9f9f9; cursor: pointer; }
+        .students-table { margin: 10px 0 10px 30px; width: 95%; }
+        .students-table th { background: #7f8c8d; }
+        select, input, button { padding: 5px; margin: 2px; }
+        .save-btn { background: #3498db; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        .refresh-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+        .present { color: green; }
+        .absent { color: red; }
+        .late { color: orange; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🏫 Admin Dashboard - Cabacao NHS</h1>
+        <p>👋 Welcome, School Administrator | 📅 Attendance Monitoring</p>
+    </div>
+
+    <div class="stats" id="stats">
+        <div><strong id="totalTeachers">0</strong> Teachers</div>
+        <div><strong id="totalStudents">0</strong> Students</div>
+        <div><strong id="totalAttendance">0</strong> Attendance Records</div>
+        <div><strong id="studentsWithTeacher">0</strong> Students with teacher assignment</div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <input type="date" id="attendanceDate" value="2026-05-20">
+        <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+    </div>
+
+    <div id="tableContainer">Loading...</div>
+</div>
+
+<script>
+    let currentDate = '2026-05-20';
+    let tempAttendance = {};
+
+    async function loadData() {
+        currentDate = document.getElementById('attendanceDate').value;
+        document.getElementById('tableContainer').innerHTML = '<p>Loading...</p>';
+        
+        try {
+            const response = await fetch(`/api/get_teacher_attendance_summary.php?date=${currentDate}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('totalTeachers').innerText = data.statistics.total_teachers || 0;
+                document.getElementById('totalStudents').innerText = data.statistics.total_students || 0;
+                document.getElementById('totalAttendance').innerText = data.statistics.total_attendance_records || 0;
+                document.getElementById('studentsWithTeacher').innerText = data.statistics.students_with_teacher || 0;
+                
+                renderTable(data.teachers || []);
+            } else {
+                document.getElementById('tableContainer').innerHTML = '<p>Error loading data</p>';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('tableContainer').innerHTML = '<p>Error connecting to API. Make sure backend is running.</p>';
+        }
+    }
+
+    function renderTable(teachers) {
+        if (!teachers.length) {
+            document.getElementById('tableContainer').innerHTML = '<p>No teachers found</p>';
+            return;
+        }
+        
+        let html = '<table><thead><tr><th></th><th>Teacher Name</th><th>Advisory Class</th><th>Students</th><th>Present</th><th>Absent</th><th>Late</th><th>Rate</th></tr></thead><tbody>';
+        
+        teachers.forEach(teacher => {
+            html += `<tr onclick="toggleStudents(${teacher.teacher_id})" style="cursor:pointer;">
+                        <td><span id="icon-${teacher.teacher_id}">▶</span></td>
+                        <td><strong>${teacher.teacher_name}</strong><br><small>${getEmail(teacher.teacher_name)}</small></td>
+                        <td>${teacher.advisory_class}</td>
+                        <td style="text-align:center">${teacher.total_students}</td>
+                        <td style="text-align:center" class="present">✅ ${teacher.present_count}</td>
+                        <td style="text-align:center" class="absent">❌ ${teacher.absent_count}</td>
+                        <td style="text-align:center" class="late">⏰ ${teacher.late_count}</td>
+                        <td style="text-align:center"><strong>${teacher.attendance_rate || 0}%</strong></td>
+                    </tr>
+                    <tr id="students-${teacher.teacher_id}" style="display:none;">
+                        <td colspan="8">
+                            <div class="students-table">
+                                <h4>Students under ${teacher.teacher_name}</h4>
+                                <table>
+                                    <thead><tr><th>#</th><th>Student Name</th><th>Section</th><th>Status</th><th>Remarks</th><th>Action</th></tr></thead>
+                                    <tbody>`;
+            
+            (teacher.students || []).forEach((student, idx) => {
+                html += `<tr>
+                            <td>${idx + 1}</td>
+                            <td>${student.student_name}</td>
+                            <td>${student.section}</td>
+                            <td>
+                                <select id="status-${teacher.teacher_id}-${student.id}" onchange="updateAttendance(${student.id}, this.value)">
+                                    <option value="Present" ${student.status === 'Present' ? 'selected' : ''}>Present</option>
+                                    <option value="Absent" ${student.status === 'Absent' ? 'selected' : ''}>Absent</option>
+                                    <option value="Late" ${student.status === 'Late' ? 'selected' : ''}>Late</option>
+                                </select>
+                            </td>
+                            <td><input type="text" id="remarks-${teacher.teacher_id}-${student.id}" value="${student.remarks || ''}" placeholder="Remarks" onchange="updateRemarks(${student.id}, this.value)"></td>
+                            <td><button class="save-btn" onclick="saveAttendance(${student.id}, ${teacher.teacher_id})">Save</button></td>
+                        </tr>`;
+            });
+            
+            html += `</tbody></table></div></td></tr>`;
+        });
+        
+        html += '</tbody></table>';
+        document.getElementById('tableContainer').innerHTML = html;
+    }
+
+    function getEmail(name) {
+        const emails = {
+            'Maria Santos': 'maria.santos@cabacaonhs.edu.ph',
+            'Juan Reyes': 'juan.reyes@cabacaonhs.edu.ph',
+            'Ana Cruz': 'ana.cruz@cabacaonhs.edu.ph',
+            'Pedro Gomez': 'pedro.gomez@cabacaonhs.edu.ph'
+        };
+        return emails[name] || '';
+    }
+
+    function toggleStudents(teacherId) {
+        const row = document.getElementById(`students-${teacherId}`);
+        const icon = document.getElementById(`icon-${teacherId}`);
+        if (row.style.display === 'none') {
+            row.style.display = 'table-row';
+            if (icon) icon.innerHTML = '▼';
+        } else {
+            row.style.display = 'none';
+            if (icon) icon.innerHTML = '▶';
+        }
+    }
+
+    function updateAttendance(studentId, status) {
+        if (!tempAttendance[studentId]) tempAttendance[studentId] = {};
+        tempAttendance[studentId].status = status;
+        tempAttendance[studentId].date = currentDate;
+        
+        document.querySelectorAll(`button[onclick*="saveAttendance(${studentId},"]`).forEach(btn => {
+            btn.style.background = '#e67e22';
+            btn.innerText = '⚠️ Save';
+        });
+    }
+
+    function updateRemarks(studentId, remarks) {
+        if (!tempAttendance[studentId]) tempAttendance[studentId] = {};
+        tempAttendance[studentId].remarks = remarks;
+        
+        document.querySelectorAll(`button[onclick*="saveAttendance(${studentId},"]`).forEach(btn => {
+            btn.style.background = '#e67e22';
+            btn.innerText = '⚠️ Save';
+        });
+    }
+
+    async function saveAttendance(studentId, teacherId) {
+        const data = tempAttendance[studentId];
+        if (!data) {
+            alert('No changes to save');
+            return;
+        }
+        
+        const status = document.getElementById(`status-${teacherId}-${studentId}`)?.value || data.status;
+        const remarks = document.getElementById(`remarks-${teacherId}-${studentId}`)?.value || '';
+        
+        const btn = document.querySelector(`button[onclick*="saveAttendance(${studentId}, ${teacherId})"]`);
+        if (btn) btn.innerText = 'Saving...';
+        
+        try {
+            const response = await fetch('/api/save_attendance.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: studentId,
+                    attendance_date: currentDate,
+                    status: status,
+                    remarks: remarks
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('✅ Attendance saved!');
+                loadData();
+            } else {
+                alert('Error: ' + result.error);
+                if (btn) btn.innerText = 'Save';
+            }
+        } catch (error) {
+            alert('Network error');
+            if (btn) btn.innerText = 'Save';
+        }
+    }
+
+    loadData();
+</script>
+</body>
+</html>
